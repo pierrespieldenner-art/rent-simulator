@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulateur Location — mute-labs France</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F7F7F5; color: #1A1A1A; padding: 24px; font-size: 14px; }
+h1 { font-size: 20px; font-weight: 600; color: #0F5C5C; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: #777; margin-bottom: 24px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+.card { background: #fff; border: 1px solid #E5E5E3; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; }
+.card-title { font-size: 13px; font-weight: 600; color: #1A1A1A; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #F0F0EE; }
+label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; margin-top: 10px; }
+label:first-of-type { margin-top: 0; }
+select, input[type=number] { width: 100%; height: 36px; border: 1px solid #DDD; border-radius: 8px; padding: 0 10px; font-size: 13px; background: #FAFAFA; color: #1A1A1A; outline: none; }
+select:focus, input[type=number]:focus { border-color: #0F5C5C; }
+input[type=number] { -moz-appearance: textfield; }
+.slider-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+.slider-row input[type=range] { flex: 1; accent-color: #0F5C5C; }
+.slider-val { font-size: 13px; font-weight: 600; color: #0F5C5C; min-width: 60px; text-align: right; }
+.opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+.opt { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #555; cursor: pointer; padding: 8px 10px; border: 1px solid #E5E5E3; border-radius: 8px; background: #FAFAFA; transition: all 0.15s; user-select: none; }
+.opt input { margin: 0; accent-color: #0F5C5C; }
+.opt.on { border-color: #0F5C5C; background: #EEF8F6; color: #0F5C5C; font-weight: 500; }
+.redesk-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.metric { background: #F7F7F5; border-radius: 10px; padding: 12px 14px; }
+.metric .ml { font-size: 11px; color: #888; margin-bottom: 4px; }
+.metric .mv { font-size: 18px; font-weight: 600; }
+.metric .ms { font-size: 11px; color: #AAA; margin-top: 3px; }
+.pos { color: #0A7A5A; } .neg { color: #B03A2A; } .neu { color: #1A5FA8; }
+.row { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #F0F0EE; font-size: 12px; gap: 8px; }
+.row:last-child { border-bottom: none; }
+.rl { color: #666; flex: 1; }
+.rv { font-weight: 600; text-align: right; }
+.verdict { border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; text-align: center; }
+.v-ok { background: #EEF8F6; border: 1px solid #5DCAA5; }
+.v-mid { background: #FEF3E8; border: 1px solid #F0A040; }
+.v-no { background: #FCECEA; border: 1px solid #E08080; }
+.vt { font-size: 15px; font-weight: 600; margin-bottom: 5px; }
+.vs { font-size: 12px; color: #555; }
+.alert { border-radius: 10px; padding: 10px 14px; font-size: 12px; margin-bottom: 14px; }
+.a-teal { background: #EEF8F6; color: #0A5A48; border: 1px solid #A8DDD6; }
+.a-orange { background: #FEF3E8; color: #7A4010; border: 1px solid #F0C080; }
+.sep { border: none; border-top: 1px solid #F0F0EE; margin: 10px 0; }
+canvas { display: block; width: 100% !important; }
+.inv-result { font-size: 12px; margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: #F7F7F5; min-height: 36px; }
+.btn { display: block; width: 100%; padding: 12px; background: #0F5C5C; color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; letter-spacing: 0.02em; }
+.btn:hover { background: #0A4A4A; }
+.loyer-manuel { background: #EEF8F6; border: 2px solid #0F5C5C; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
+.loyer-manuel label { color: #0A5A48; font-weight: 600; font-size: 13px; }
+.loyer-manuel input { border-color: #0F5C5C; background: #fff; }
+.mode-badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 6px; margin-left: 8px; }
+.mode-auto { background: #E8F0FE; color: #1A5FA8; }
+.mode-manuel { background: #EEF8F6; color: #0A5A48; }
+</style>
+</head>
+<body>
+
+<h1>Simulateur Location — mute-labs France</h1>
+<p class="subtitle">Couts reels FR integres — mai 2026. Entrez les tarifs Redesk des que disponibles.</p>
+
+<div class="alert a-teal">
+  <strong>Couts sources internes :</strong> SOLO : COGS 1 230 EUR, livraison 360 EUR, montage 120 EUR, ML cost 50 EUR = <strong>1 760 EUR total.</strong> QUATTRO : COGS 3 980 EUR, livraison 700 EUR, montage 900 EUR, ML cost 50 EUR = <strong>5 630 EUR total.</strong>
+</div>
+
+<div class="grid">
+  <div>
+    <div class="card">
+      <div class="card-title">Modele et duree</div>
+      <label>Modele de cabine</label>
+      <select id="model" onchange="calc()">
+        <option value="solo">SOLO — 1 personne (2 990 EUR HT)</option>
+        <option value="quattro">QUATTRO — 4 personnes (8 490 EUR HT)</option>
+      </select>
+      <label>Duree du contrat — <span id="dur-label" style="font-weight:600; color:#0F5C5C;">12 mois</span></label>
+      <div class="slider-row">
+        <input type="range" min="1" max="24" value="12" step="1" id="duration" oninput="calc()">
+      </div>
+      <label>Marge cible</label>
+      <select id="margin-target" onchange="calc()">
+        <option value="0">Seuil d'equilibre (0%)</option>
+        <option value="15">Marge cible 15%</option>
+        <option value="25" selected>Marge cible 25%</option>
+        <option value="35">Marge cible 35%</option>
+      </select>
+    </div>
+
+    <div class="loyer-manuel">
+      <label>Loyer a simuler (EUR/mois) <span class="mode-badge mode-manuel" id="mode-badge">Manuel</span></label>
+      <p style="font-size:11px; color:#555; margin: 6px 0 8px;">Entrez un loyer precis pour simuler la rentabilite exacte. Laissez vide pour utiliser le loyer calcule automatiquement.</p>
+      <input type="number" id="loyer-manuel" min="0" placeholder="Ex: 350" style="width:100%; height:36px; border:1px solid #DDD; border-radius:8px; padding:0 10px; font-size:13px; background:#fff; margin-bottom:10px;">
+      <button class="btn" onclick="calc()">Actualiser le calcul</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Options incluses dans le loyer</div>
+      <div class="opt-grid">
+        <div class="opt on" id="opt-liv" onclick="toggleOpt('opt-liv')"><input type="checkbox" id="chk-liv" checked> Livraison</div>
+        <div class="opt on" id="opt-mont" onclick="toggleOpt('opt-mont')"><input type="checkbox" id="chk-mont" checked> Montage</div>
+        <div class="opt" id="opt-dem" onclick="toggleOpt('opt-dem')"><input type="checkbox" id="chk-dem"> Demontage retour</div>
+        <div class="opt on" id="opt-ml" onclick="toggleOpt('opt-ml')"><input type="checkbox" id="chk-ml" checked> ML personal cost</div>
+      </div>
+      <p style="font-size:11px; color:#999; margin-top:10px;">Si demontage non inclus : a charge du client ou facture separement.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Rachat Redesk <span style="font-size:11px; background:#FEF3E8; color:#7A4010; padding:2px 8px; border-radius:6px; margin-left:6px;">En attente</span></div>
+      <p style="font-size:11px; color:#999; margin-bottom:10px;">Entrez les estimations Redesk par niveau d'etat. Le calcul se met a jour automatiquement.</p>
+      <div class="redesk-grid">
+        <div>
+          <label>Tres bon etat</label>
+          <input type="number" id="red-good" value="0" min="0" placeholder="EUR" oninput="calc()">
+        </div>
+        <div>
+          <label>Etat moyen</label>
+          <input type="number" id="red-mid" value="0" min="0" placeholder="EUR" oninput="calc()">
+        </div>
+        <div>
+          <label>Mauvais etat</label>
+          <input type="number" id="red-bad" value="0" min="0" placeholder="EUR" oninput="calc()">
+        </div>
+      </div>
+      <label>Etat prevu en fin de contrat</label>
+      <select id="red-state" onchange="calc()">
+        <option value="good">Tres bon etat (usage normal 6-12 mois)</option>
+        <option value="mid">Etat moyen (usage intensif)</option>
+        <option value="bad">Mauvais etat (dommages)</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Test inverse — loyer propose par le client</div>
+      <label>Loyer mensuel propose (EUR/mois)</label>
+      <input type="number" id="client-rent" value="" min="0" placeholder="Ex: 150" oninput="calcInverse()">
+      <div class="inv-result" id="inverse-result">Entrez un loyer pour tester la viabilite.</div>
+    </div>
+  </div>
+
+  <div>
+    <div id="verdict-box" class="verdict v-mid">
+      <div class="vt" id="verdict-title">Calcul en cours...</div>
+      <div class="vs" id="verdict-sub"></div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><div class="ml">Loyer minimum</div><div class="mv neu" id="r-min">—</div><div class="ms">Seuil equilibre</div></div>
+      <div class="metric"><div class="ml">Loyer recommande</div><div class="mv pos" id="r-rec">—</div><div class="ms">Avec marge cible</div></div>
+      <div class="metric"><div class="ml">Break-even</div><div class="mv" id="r-be">—</div><div class="ms">Mois rentable</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Detail des couts (source interne mute-labs)</div>
+      <div class="row"><span class="rl">COGS cabine</span><span class="rv neg" id="r-cogs">—</span></div>
+      <div class="row"><span class="rl">Livraison + warehouse FR</span><span class="rv neg" id="r-liv">—</span></div>
+      <div class="row"><span class="rl">Montage FR</span><span class="rv neg" id="r-mont">—</span></div>
+      <div class="row"><span class="rl">Demontage retour</span><span class="rv neg" id="r-dem">—</span></div>
+      <div class="row"><span class="rl">ML personal cost</span><span class="rv neg" id="r-ml">—</span></div>
+      <div class="row"><span class="rl">Reserve dommages (3% COGS)</span><span class="rv neg" id="r-dom">—</span></div>
+      <div class="sep"></div>
+      <div class="row"><span class="rl" style="font-weight:600;">Total couts engages</span><span class="rv neg" id="r-total" style="font-size:14px;">—</span></div>
+      <div class="sep"></div>
+      <div class="row"><span class="rl">Rachat Redesk</span><span class="rv pos" id="r-redesk">—</span></div>
+      <div class="row"><span class="rl">Revenus loyers cumules</span><span class="rv pos" id="r-loyers">—</span></div>
+      <div class="sep"></div>
+      <div class="row"><span class="rl" style="font-weight:600;">Marge brute</span><span class="rv" id="r-marge" style="font-size:14px;">—</span></div>
+      <div class="row"><span class="rl">Marge vente directe (reference)</span><span class="rv neu" id="r-ref">—</span></div>
+      <div class="row"><span class="rl">Location vs vente</span><span class="rv" id="r-vs">—</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Courbe de rentabilite</div>
+      <canvas id="chart" height="160"></canvas>
+      <p style="font-size:11px; color:#AAA; margin-top:8px;">Vert = revenus cumules. Rouge pointille = couts engages. Croisement = break-even.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+var MODELS = {
+  solo:    { price:2990, cogs:1230, liv:360, mont:120, dem:120, ml:50 },
+  quattro: { price:8490, cogs:3980, liv:700, mont:900, dem:900, ml:50 }
+};
+
+function toggleOpt(id) {
+  var el = document.getElementById(id);
+  var chk = document.getElementById('chk-' + id.replace('opt-',''));
+  el.classList.toggle('on');
+  chk.checked = el.classList.contains('on');
+  calc();
+}
+
+function fmt(n) {
+  return Math.round(n).toLocaleString('fr-FR') + ' €';
+}
+
+function getRedesk() {
+  var s = document.getElementById('red-state').value;
+  var v = parseInt(document.getElementById('red-' + (s==='good'?'good':s==='mid'?'mid':'bad')).value) || 0;
+  return v;
+}
+
+function calc() {
+  var model = document.getElementById('model').value;
+  var dur = parseInt(document.getElementById('duration').value);
+  var mt = parseInt(document.getElementById('margin-target').value);
+  var m = MODELS[model];
+
+  var inclLiv  = document.getElementById('opt-liv').classList.contains('on');
+  var inclMont = document.getElementById('opt-mont').classList.contains('on');
+  var inclDem  = document.getElementById('opt-dem').classList.contains('on');
+  var inclML   = document.getElementById('opt-ml').classList.contains('on');
+
+  var livC  = inclLiv  ? m.liv  : 0;
+  var montC = inclMont ? m.mont : 0;
+  var demC  = inclDem  ? m.dem  : 0;
+  var mlC   = inclML   ? m.ml   : 0;
+  var domR  = Math.round(m.cogs * 0.03);
+  var total = m.cogs + livC + montC + demC + mlC + domR;
+  var redesk = getRedesk();
+  var netCost = total - redesk;
+  var refMargin = m.price - (m.cogs + m.liv + m.mont + m.ml);
+
+  document.getElementById('dur-label').textContent = dur + ' mois';
+  document.getElementById('r-cogs').textContent  = fmt(m.cogs);
+  document.getElementById('r-liv').textContent   = inclLiv  ? fmt(m.liv)  : 'Non inclus';
+  document.getElementById('r-mont').textContent  = inclMont ? fmt(m.mont) : 'Non inclus';
+  document.getElementById('r-dem').textContent   = inclDem  ? fmt(m.dem)  : 'A charge client';
+  document.getElementById('r-ml').textContent    = inclML   ? fmt(m.ml)   : 'Non inclus';
+  document.getElementById('r-dom').textContent   = fmt(domR);
+  document.getElementById('r-total').textContent = fmt(total);
+  document.getElementById('r-redesk').textContent = redesk > 0 ? '+ ' + fmt(redesk) : 'En attente Redesk';
+  document.getElementById('r-ref').textContent   = fmt(refMargin) + ' (' + Math.round(refMargin/m.price*100) + '%)';
+
+  var loyerManuel = parseInt(document.getElementById('loyer-manuel').value) || 0;
+  var minRent = Math.max(1, Math.ceil(netCost / dur));
+  var autoRent = mt === 0 ? minRent : Math.max(1, Math.ceil((netCost / dur) / (1 - mt/100)));
+  var recRent = loyerManuel > 0 ? loyerManuel : autoRent;
+
+  var badge = document.getElementById('mode-badge');
+  if (loyerManuel > 0) {
+    badge.textContent = 'Loyer saisi : ' + fmt(loyerManuel) + '/mois';
+    badge.className = 'mode-badge mode-manuel';
+  } else {
+    badge.textContent = 'Loyer auto calcule';
+    badge.className = 'mode-badge mode-auto';
+  }
+
+  var be = Math.ceil(netCost / recRent);
+  var totalRev = recRent * dur + redesk;
+  var marge = totalRev - total;
+
+  document.getElementById('r-min').textContent   = fmt(minRent) + '/mois';
+  document.getElementById('r-rec').textContent   = loyerManuel > 0 ? fmt(loyerManuel) + '/mois (saisi)' : fmt(autoRent) + '/mois';
+  var beEl = document.getElementById('r-be');
+  beEl.textContent = be <= dur ? 'Mois ' + be : be + ' mois';
+  beEl.className = 'mv ' + (be <= dur ? 'pos' : 'neg');
+
+  document.getElementById('r-loyers').textContent = fmt(recRent * dur) + ' (' + fmt(recRent) + ' x ' + dur + ' mois)';
+  var mEl = document.getElementById('r-marge');
+  mEl.textContent = fmt(marge) + ' (' + Math.round(marge/total*100) + '%)';
+  mEl.className = 'rv ' + (marge >= 0 ? 'pos' : 'neg');
+
+  var diff = marge - refMargin;
+  var vsEl = document.getElementById('r-vs');
+  vsEl.textContent = (diff >= 0 ? '+' : '') + fmt(diff);
+  vsEl.className = 'rv ' + (diff >= 0 ? 'pos' : 'neg');
+
+  var vBox = document.getElementById('verdict-box');
+  var vTitle = document.getElementById('verdict-title');
+  var vSub = document.getElementById('verdict-sub');
+  if (be <= dur && marge >= refMargin) {
+    vBox.className = 'verdict v-ok';
+    vTitle.textContent = 'Rentable — plus profitable que la vente directe';
+    vSub.textContent = 'Break-even au mois ' + be + '. Marge totale ' + fmt(marge) + ' (' + Math.round(marge/total*100) + '%).';
+  } else if (be <= dur) {
+    vBox.className = 'verdict v-mid';
+    vTitle.textContent = 'Rentable mais en dessous de la marge vente';
+    vSub.textContent = 'Break-even au mois ' + be + '. Marge vente de reference : ' + fmt(refMargin) + '.';
+  } else {
+    vBox.className = 'verdict v-no';
+    vTitle.textContent = 'Non rentable sur cette duree';
+    vSub.textContent = 'Break-even au mois ' + be + ' mais contrat de ' + dur + ' mois. Augmenter le loyer ou la duree.';
+  }
+
+  drawChart(dur, recRent, total, redesk, be);
+  calcInverse();
+}
+
+function calcInverse() {
+  var cr = parseInt(document.getElementById('client-rent').value) || 0;
+  var dur = parseInt(document.getElementById('duration').value);
+  var model = document.getElementById('model').value;
+  var m = MODELS[model];
+  var inclLiv  = document.getElementById('opt-liv').classList.contains('on');
+  var inclMont = document.getElementById('opt-mont').classList.contains('on');
+  var inclDem  = document.getElementById('opt-dem').classList.contains('on');
+  var inclML   = document.getElementById('opt-ml').classList.contains('on');
+  var domR = Math.round(m.cogs * 0.03);
+  var total = m.cogs + (inclLiv?m.liv:0) + (inclMont?m.mont:0) + (inclDem?m.dem:0) + (inclML?m.ml:0) + domR;
+  var redesk = getRedesk();
+  var netCost = total - redesk;
+  var el = document.getElementById('inverse-result');
+  if (cr <= 0) { el.style.background='#F7F7F5'; el.style.color='#999'; el.textContent='Entrez un loyer pour tester.'; return; }
+  var rev = cr * dur + redesk;
+  var marge = rev - total;
+  var be = Math.ceil(netCost / cr);
+  if (marge >= 0 && be <= dur) {
+    el.style.background='#EEF8F6'; el.style.color='#0A5A48';
+    el.innerHTML = '<strong>Viable.</strong> Marge : ' + fmt(marge) + ' (' + Math.round(marge/total*100) + '%). Break-even : mois ' + be + '.';
+  } else {
+    el.style.background='#FCECEA'; el.style.color='#B03A2A';
+    el.innerHTML = '<strong>Non viable.</strong> ' + (be > dur ? 'Break-even au mois ' + be + ' (contrat trop court).' : 'Perte de ' + fmt(Math.abs(marge)) + '.') + ' Loyer minimum : ' + fmt(Math.ceil(netCost/dur)) + '/mois.';
+  }
+}
+
+function drawChart(dur, rent, total, redesk, be) {
+  var canvas = document.getElementById('chart');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.offsetWidth || 400;
+  var H = 160;
+  canvas.width = W; canvas.height = H;
+  ctx.clearRect(0, 0, W, H);
+
+  var points = dur + 1;
+  var maxVal = Math.max(total, rent * dur + redesk) * 1.1;
+  var padL = 52, padR = 16, padT = 16, padB = 28;
+  var chartW = W - padL - padR;
+  var chartH = H - padT - padB;
+
+  function xp(i) { return padL + (i / dur) * chartW; }
+  function yp(v) { return padT + chartH - (v / maxVal) * chartH; }
+
+  // Grid
+  ctx.strokeStyle = '#F0F0EE'; ctx.lineWidth = 1;
+  for (var g = 0; g <= 4; g++) {
+    var yg = padT + (g / 4) * chartH;
+    ctx.beginPath(); ctx.moveTo(padL, yg); ctx.lineTo(padL + chartW, yg); ctx.stroke();
+    var val = Math.round(maxVal * (1 - g/4));
+    ctx.fillStyle = '#AAA'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText((val >= 1000 ? Math.round(val/1000) + 'k' : val) + '€', padL - 4, yg + 4);
+  }
+
+  // X axis labels
+  ctx.fillStyle = '#AAA'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
+  var step = Math.ceil(dur / 6);
+  for (var i = 0; i <= dur; i += step) {
+    ctx.fillText('M' + i, xp(i), H - 6);
+  }
+
+  // Cost line (dashed red)
+  ctx.strokeStyle = '#E08080'; ctx.lineWidth = 2;
+  ctx.setLineDash([5, 3]);
+  ctx.beginPath(); ctx.moveTo(xp(0), yp(total)); ctx.lineTo(xp(dur), yp(total)); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Revenue area
+  ctx.strokeStyle = '#0F6E56'; ctx.lineWidth = 2.5;
+  ctx.fillStyle = 'rgba(15,110,86,0.08)';
+  ctx.beginPath();
+  ctx.moveTo(xp(0), yp(0));
+  for (var i = 0; i <= dur; i++) {
+    var rev = rent * i + (i === dur && redesk > 0 ? redesk : 0);
+    ctx.lineTo(xp(i), yp(rev));
+  }
+  ctx.lineTo(xp(dur), yp(0));
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(xp(0), yp(0));
+  for (var i = 0; i <= dur; i++) {
+    var rev = rent * i + (i === dur && redesk > 0 ? redesk : 0);
+    ctx.lineTo(xp(i), yp(rev));
+  }
+  ctx.stroke();
+
+  // Break-even marker
+  if (be <= dur) {
+    var bx = xp(be);
+    var by = yp(total);
+    ctx.fillStyle = '#0F6E56';
+    ctx.beginPath(); ctx.arc(bx, by, 5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#0F5C5C'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('M' + be, bx, by - 10);
+  }
+
+  // Legend
+  ctx.font = '11px sans-serif'; ctx.textAlign = 'left';
+  ctx.fillStyle = '#0F6E56';
+  ctx.fillRect(padL, padT, 12, 3); ctx.fillText('Revenus cumules', padL + 16, padT + 4);
+  ctx.strokeStyle = '#E08080'; ctx.lineWidth = 2; ctx.setLineDash([4,2]);
+  ctx.beginPath(); ctx.moveTo(padL + 130, padT + 2); ctx.lineTo(padL + 142, padT + 2); ctx.stroke();
+  ctx.setLineDash([]); ctx.fillStyle = '#E08080';
+  ctx.fillText('Couts engages', padL + 146, padT + 4);
+}
+
+calc();
+</script>
+</body>
+</html>
